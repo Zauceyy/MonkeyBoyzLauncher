@@ -1,0 +1,52 @@
+# Builds the Windows installer zip and attaches it to a GitHub release.
+# Run it by pushing a tag such as v2.4.3, or from the Actions tab ("Run workflow").
+# Optional repository secrets (Settings > Secrets and variables > Actions):
+#   CURSEFORGE_API_KEY  built into the launcher so nobody has to paste a key
+#   MS_CLIENT_ID        Mojang-approved Azure app id for in-launcher Microsoft sign-in
+#   DISCORD_APP_ID      Discord application id for Rich Presence
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Test
+        run: go test ./...
+      - name: Build launcher and setup
+        env:
+          CF_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          MS_ID: ${{ secrets.MS_CLIENT_ID }}
+          DISCORD_ID: ${{ secrets.DISCORD_APP_ID }}
+          GOOS: windows
+          GOARCH: amd64
+        run: |
+          go build -trimpath -ldflags "-H windowsgui -s -w -X 'main.builtinCurseForgeKey=${CF_KEY}' -X 'main.builtinMSClientID=${MS_ID}' -X 'main.builtinDiscordAppID=${DISCORD_ID}'" -o setup/MonkeyBoyzLauncher.exe .
+          mkdir -p "out/MonkeyBoyz Launcher"
+          go build -trimpath -ldflags "-H windowsgui -s -w" -o "out/MonkeyBoyz Launcher/MonkeyBoyz Launcher Setup.exe" ./setup
+          cp "packaging/READ ME FIRST.txt" "out/MonkeyBoyz Launcher/"
+          cd out && zip -r ../MonkeyBoyzLauncher.zip "MonkeyBoyz Launcher"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MonkeyBoyzLauncher
+          path: MonkeyBoyzLauncher.zip
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" MonkeyBoyzLauncher.zip --title "MonkeyBoyz Launcher ${GITHUB_REF_NAME}" --generate-notes

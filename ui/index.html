@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MonkeyBoyz Launcher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#120f0a; --panel:#1c1710; --panel2:#262017; --panel3:#322a1d; --line:#3d3323;
+  --text:#f6ecd8; --muted:#b5a78b; --dim:#857a65;
+  --banana:#ffd43b; --banana2:#f5b301; --leaf:#58b368; --leaf2:#2f7d46; --danger:#e8573f; --fur:#8a5526;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;user-select:none}
+button,input,select{font:inherit;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--panel3);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#4a3f2c;background-clip:padding-box;border:2px solid transparent}
+
+#app{display:grid;grid-template-columns:270px 1fr;height:100vh}
+aside{background:linear-gradient(180deg,#1f1911,#17120c);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.brand{display:flex;align-items:center;gap:11px;padding:16px 16px 12px}
+.brand svg{width:46px;height:46px;flex:none;filter:drop-shadow(0 3px 6px #0008)}
+.brand b{font-size:20px;font-weight:800;letter-spacing:.2px;line-height:1.05;display:block}
+.brand b span{color:var(--banana)}
+.brand small{color:var(--muted);font-size:11px;letter-spacing:2.5px;text-transform:uppercase}
+.side-actions{display:grid;grid-template-columns:1fr auto;gap:8px;padding:4px 14px 12px}
+.side-label{padding:6px 18px 6px;color:var(--dim);font-size:11px;letter-spacing:1.6px;text-transform:uppercase;font-weight:700}
+#instList{flex:1;overflow:auto;padding:0 8px 8px;min-height:0}
+.inst{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;cursor:pointer;border:1px solid transparent;position:relative}
+.inst:hover{background:var(--panel2)}
+.inst.sel{background:var(--panel3);border-color:#55462d}
+.inst.sel::before{content:"";position:absolute;left:-8px;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--banana)}
+.inst .nm{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inst .sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inst .txt{min-width:0;flex:1}
+.live{width:9px;height:9px;border-radius:50%;background:var(--leaf);box-shadow:0 0 0 3px #58b36833;flex:none}
+.icon{border-radius:22%;flex:none;display:grid;place-items:center;overflow:hidden;background:var(--panel3);box-shadow:inset 0 0 0 1px #ffffff14}
+.icon img{width:100%;height:100%;object-fit:cover;display:block}
+.icon svg{width:78%;height:78%}
+.side-foot{border-top:1px solid var(--line);padding:10px;display:flex;gap:8px;align-items:center}
+.acct{flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:11px;cursor:pointer;background:var(--panel2);border:1px solid var(--line)}
+.acct:hover{border-color:#5d4d31}
+.acct .av{width:30px;height:30px;border-radius:8px;background:var(--fur);display:grid;place-items:center;font-weight:800;flex:none}
+.acct .who{min-width:0}.acct .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}
+.acct .who small{color:var(--muted);font-size:11px}
+
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:8px 13px;cursor:pointer;font-weight:600;white-space:nowrap;transition:.12s}
+.btn:hover{background:var(--panel3);border-color:#5d4d31}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.banana{background:linear-gradient(180deg,var(--banana),var(--banana2));color:#2a1d00;border-color:#c98f00;font-weight:750}
+.btn.banana:hover{filter:brightness(1.07)}
+.btn.danger{color:#ffb4a6;border-color:#6b2f25}.btn.danger:hover{background:#3a1d17}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn.iconbtn{padding:8px 10px}
+.play{font-size:18px;font-weight:800;letter-spacing:.8px;padding:13px 34px;border-radius:14px;border:0;cursor:pointer;color:#102613;
+  background:linear-gradient(180deg,#7fe08f,#3fae58);box-shadow:0 4px 0 #23733a,0 10px 24px #3fae5833;transition:.1s;min-width:150px}
+.play:hover{filter:brightness(1.06)}.play:active{transform:translateY(3px);box-shadow:0 1px 0 #23733a}
+.play:disabled{filter:grayscale(.7) brightness(.7);cursor:default;transform:none}
+.play.stop{background:linear-gradient(180deg,#ff8a75,#e2543c);box-shadow:0 4px 0 #8f2c1c;color:#2b0b05}
+
+main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;
+  background:radial-gradient(900px 420px at 85% -10%,#2f7d4626,transparent 70%),radial-gradient(700px 380px at 10% 110%,#f5b30112,transparent 70%),var(--bg)}
+.vines{position:absolute;inset:0 0 auto 0;height:150px;pointer-events:none;opacity:.5}
+#empty{flex:1;display:grid;place-items:center;text-align:center;padding:30px}
+#empty svg.big{width:150px;height:150px;filter:drop-shadow(0 10px 20px #000a);animation:bob 3.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-3deg)}}
+#empty h1{font-size:28px;margin:18px 0 6px;font-weight:800}
+#empty p{color:var(--muted);max-width:470px;margin:0 auto 20px}
+.drop{border:2px dashed #5d4d31;border-radius:18px;padding:22px 30px;color:var(--muted);display:inline-block}
+
+#detail{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+.hero{display:flex;gap:18px;align-items:center;padding:24px 26px 16px}
+.hero .icon{cursor:pointer;position:relative;box-shadow:0 8px 22px #0009,inset 0 0 0 1px #ffffff1c}
+.hero .icon:hover::after{content:"Change";position:absolute;inset:0;background:#000a;display:grid;place-items:center;font-size:12px;font-weight:700}
+.hero .meta{flex:1;min-width:0}
+.hero h2{margin:0 0 7px;font-size:26px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted)}
+.chip b{color:var(--text);font-weight:650}
+.chip.warn{border-color:#8a6a00;color:var(--banana)}
+.hero .go{display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.ram{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12.5px}
+select,input[type=text],input[type=password],input[type=search]{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;outline:none;user-select:text}
+select:focus,input:focus{border-color:var(--banana2)}
+select{cursor:pointer}
+.tabs{display:flex;gap:4px;padding:0 22px;border-bottom:1px solid var(--line);align-items:center}
+.tab{padding:9px 14px;cursor:pointer;color:var(--muted);font-weight:650;border-bottom:3px solid transparent;margin-bottom:-1px;border-radius:8px 8px 0 0}
+.tab:hover{color:var(--text)}.tab.on{color:var(--banana);border-color:var(--banana)}
+.tab .n{background:var(--panel3);border-radius:999px;padding:0 7px;font-size:11.5px;margin-left:5px;color:var(--text)}
+.tab.alert .n{background:var(--banana);color:#2a1d00}
+.tabs .sp{flex:1}
+.pane{flex:1;min-height:0;display:none;flex-direction:column}
+.pane.on{display:flex}
+.toolbar{display:flex;gap:8px;align-items:center;padding:12px 22px 8px}
+.toolbar input[type=search]{flex:1;max-width:340px}
+.toolbar .info{color:var(--muted);font-size:12.5px;margin-right:auto}
+#modList,#manualList,#browseList{flex:1;overflow:auto;padding:0 16px 14px 22px;min-height:0}
+.mod{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:12px}
+.mod:hover{background:#ffffff08}
+.mod.off .mi,.mod.off .mt{opacity:.42}
+.mi{width:40px;height:40px;border-radius:9px;background:var(--panel3);flex:none;display:grid;place-items:center;overflow:hidden;font-size:20px}
+.mi img{width:100%;height:100%;object-fit:cover;image-rendering:auto}
+.mt{flex:1;min-width:0}
+.mt .a{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt .a small{color:var(--dim);font-weight:500;margin-left:6px}
+.mt .b{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link{color:var(--banana);cursor:pointer;font-size:12.5px;white-space:nowrap}.link:hover{text-decoration:underline}
+.sw{width:38px;height:22px;border-radius:999px;background:#4a3f2c;position:relative;cursor:pointer;flex:none;transition:.15s}
+.sw::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#d6c9ae;top:3px;left:3px;transition:.15s}
+.sw.on{background:var(--leaf2)}.sw.on::after{left:19px;background:#fff}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.seg button{background:var(--panel2);border:0;padding:7px 13px;cursor:pointer;font-weight:650;color:var(--muted)}
+.seg button.on{background:var(--banana);color:#2a1d00}
+.dl{color:var(--dim);font-size:12px;white-space:nowrap}
+.hint{color:var(--muted);padding:26px;text-align:center}
+.hint .big{font-size:38px;display:block;margin-bottom:6px}
+#console{flex:1;margin:12px 22px 14px;background:#0b0906;border:1px solid var(--line);border-radius:12px;padding:10px 12px;overflow:auto;
+  font:12px/1.5 "Cascadia Mono",Consolas,Menlo,monospace;color:#cfc4ad;white-space:pre-wrap;word-break:break-word;user-select:text;min-height:0}
+#console .err{color:#ff9d8c}#console .warn{color:var(--banana)}
+
+.statusbar{border-top:1px solid var(--line);background:var(--panel);padding:9px 20px 11px;display:flex;align-items:center;gap:14px;min-height:48px}
+.statusbar .st{white-space:nowrap;color:var(--muted);max-width:46%;overflow:hidden;text-overflow:ellipsis}
+.statusbar.busy .st{color:var(--text)}
+.bar{flex:1;height:12px;border-radius:999px;background:var(--panel3);position:relative;visibility:hidden}
+.statusbar.busy .bar{visibility:visible}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:repeating-linear-gradient(-45deg,var(--banana),var(--banana) 10px,var(--banana2) 10px,var(--banana2) 20px);background-size:28px 100%;animation:slide .7s linear infinite;transition:width .25s}
+.bar i::after{content:"🍌";position:absolute;right:-11px;top:-9px;font-size:20px}
+.bar.ind i{width:28%!important;animation:slide .7s linear infinite,ind 1.5s ease-in-out infinite alternate}
+@keyframes slide{to{background-position:28px 0}}@keyframes ind{from{left:0}to{left:72%}}
+.pct{font-variant-numeric:tabular-nums;color:var(--muted);min-width:44px;text-align:right;visibility:hidden}
+.statusbar.busy .pct{visibility:visible}
+
+.scrim{position:fixed;inset:0;background:#0009;backdrop-filter:blur(3px);display:none;place-items:center;z-index:20;padding:20px}
+.scrim.on{display:grid}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;width:min(560px,100%);max-height:90vh;overflow:auto;box-shadow:0 30px 80px #000c;padding:22px}
+.modal.wide{width:min(900px,100%);height:min(680px,90vh);display:flex;flex-direction:column;overflow:hidden}
+.modal.wide #packList{flex:1;overflow:auto;min-height:0;margin:0 -8px}
+.modal h3{margin:0 0 4px;font-size:19px;font-weight:800}
+.modal p{color:var(--muted);margin:6px 0 12px}
+.modal .row{display:grid;grid-template-columns:170px 1fr;gap:10px;align-items:center;margin:10px 0}
+.modal .row label{color:var(--muted)}
+.modal .row small{grid-column:2;color:var(--dim);margin-top:-6px;font-size:12px}
+.modal .row input,.modal .row select{width:100%}
+.modal .foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.modal ol{color:var(--muted);padding-left:20px;margin:8px 0}.modal ol li{margin:7px 0}
+.code{font:800 34px/1 "Cascadia Mono",Consolas,monospace;letter-spacing:6px;color:var(--banana);background:#0b0906;border:1px dashed #6b5a36;border-radius:14px;padding:18px;text-align:center;margin:14px 0;user-select:text}
+.acctrow{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;border:1px solid var(--line);margin:7px 0;cursor:pointer}
+.acctrow.sel{border-color:var(--banana2);background:#ffd43b10}
+.acctrow .av{width:32px;height:32px;border-radius:8px;background:var(--fur);display:grid;place-items:center;font-weight:800}
+.acctrow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:11px;border-radius:999px;padding:2px 8px;background:var(--panel3);color:var(--muted)}
+.tag.ms{background:#1f4a2b;color:#a9e6b6}
+#toasts{position:fixed;right:18px;bottom:66px;display:flex;flex-direction:column;gap:8px;z-index:40;align-items:flex-end}
+.toast{background:var(--panel3);border:1px solid #5d4d31;border-left:5px solid var(--leaf);padding:11px 14px;border-radius:12px;max-width:440px;box-shadow:0 12px 30px #000a;cursor:pointer;white-space:pre-wrap;user-select:text}
+.toast.error{border-left-color:var(--danger)}
+#dropzone{position:fixed;inset:0;background:#120f0aee;z-index:50;display:none;place-items:center;text-align:center;border:4px dashed var(--banana);font-size:22px;font-weight:800}
+#dropzone.on{display:grid}
+#dropzone span{font-size:70px;display:block}
+#dead{position:fixed;inset:0;background:#120f0af2;z-index:60;display:none;place-items:center;text-align:center}
+#dead.on{display:grid}
+.menu{position:absolute;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;z-index:15;box-shadow:0 16px 40px #000b;min-width:200px;display:none}
+.menu.on{display:block}
+.menu div{padding:8px 11px;border-radius:8px;cursor:pointer}.menu div:hover{background:var(--panel3)}
+.menu div.danger{color:#ffb4a6}.menu hr{border:0;border-top:1px solid var(--line);margin:5px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <div class="brand"><span id="brandLogo"></span><div><b>Monkey<span>Boyz</span></b><small>Launcher</small></div></div>
+    <div class="side-actions">
+      <button class="btn banana" id="btnImport" title="Import a modpack exported from CurseForge">＋ Import pack</button>
+      <button class="btn" id="btnNew" title="Create an empty instance">New</button>
+      <button class="btn" id="btnBrowse" style="grid-column:1/-1" title="Search Modrinth and CurseForge for modpacks">🔍 Find modpacks</button>
+    </div>
+    <div class="side-label">Your packs</div>
+    <div id="instList"></div>
+    <div class="side-foot">
+      <div class="acct" id="acctChip" title="Accounts"></div>
+      <button class="btn iconbtn" id="btnSettings" title="Settings">⚙</button>
+    </div>
+  </aside>
+  <main>
+    <svg class="vines" viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 0 Q120 70 260 22 T520 40 T800 18 T1000 46 V0Z" fill="#2f7d4630"/>
+      <path d="M0 0 Q200 44 380 10 T700 30 T1000 8 V0Z" fill="#58b36822"/>
+    </svg>
+    <section id="empty">
+      <div>
+        <span id="bigLogo"></span>
+        <h1>Welcome to the jungle</h1>
+        <p>Export a profile from the CurseForge app (profile menu → Export Profile), then drop the zip anywhere in this window.</p>
+        <div class="drop">🍌 Drop a CurseForge .zip or Modrinth .mrpack here<br><br><button class="btn banana" id="btnImport2">Choose a pack…</button> <button class="btn" id="btnBrowse2">🔍 Find modpacks</button></div>
+      </div>
+    </section>
+    <section id="detail" style="display:none">
+      <div class="hero">
+        <div class="icon" id="heroIcon" style="width:92px;height:92px" title="Click to pick a picture for this pack"></div>
+        <div class="meta"><h2 id="heroName"></h2><div class="chips" id="heroChips"></div></div>
+        <div class="go">
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn iconbtn" id="btnMore" title="More">⋯</button>
+            <button class="play" id="btnPlay">PLAY</button>
+          </div>
+          <label class="ram">Memory <select id="ramSel"></select></label>
+          <div class="ram" id="viaHint"></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on" data-tab="mods">Mods<span class="n" id="nMods">0</span></div>
+        <div class="tab" data-tab="browse">Add mods</div>
+        <div class="tab" data-tab="console">Console</div>
+        <div class="tab alert" data-tab="manual" id="tabManual" style="display:none">Missing files<span class="n" id="nManual">0</span></div>
+        <div class="sp"></div>
+      </div>
+      <div class="pane on" id="pane-mods">
+        <div class="toolbar">
+          <input type="search" id="modSearch" placeholder="Search mods…">
+          <span class="info" id="modInfo"></span>
+          <button class="btn sm" id="btnAllOn">Enable all</button>
+          <button class="btn sm" id="btnModsFolder">Open mods folder</button>
+        </div>
+        <div id="modList"></div>
+      </div>
+      <div class="pane" id="pane-browse">
+        <div class="toolbar">
+          <div class="seg" id="srcSeg"><button data-src="modrinth" class="on">Modrinth</button><button data-src="curseforge">CurseForge</button></div>
+          <select id="kindSel"><option value="mod">Mods</option><option value="resourcepack">Resource packs</option><option value="shader">Shaders</option><option value="modpack">Modpacks…</option></select>
+          <input type="search" id="browseQ" placeholder="Search…">
+          <span class="info" id="browseInfo"></span>
+        </div>
+        <div id="browseList"></div>
+      </div>
+      <div class="pane" id="pane-console">
+        <div class="toolbar"><span class="info">Launcher and game output</span>
+          <button class="btn sm" id="btnCopyLog">Copy all</button>
+          <button class="btn sm" id="btnLogs">Open game logs folder</button></div>
+        <div id="console"></div>
+      </div>
+      <div class="pane" id="pane-manual">
+        <div class="toolbar"><span class="info">These files can only be downloaded from the CurseForge site. Download each one, leave it in your Downloads folder, then press Check.</span>
+          <button class="btn sm banana" id="btnCheckManual">Check Downloads</button></div>
+        <div id="manualList"></div>
+      </div>
+      <div class="menu" id="moreMenu">
+        <div data-act="altplay" id="altPlay"></div>
+        <hr>
+        <div data-act="folder">Open instance folder</div>
+        <div data-act="saves">Open worlds folder</div>
+        <div data-act="screenshots">Open screenshots</div>
+        <hr>
+        <div data-act="rename">Rename…</div>
+        <div data-act="icon">Change picture…</div>
+        <div data-act="iconreset">Use the default picture</div>
+        <hr>
+        <div data-act="delete" class="danger">Delete…</div>
+      </div>
+    </section>
+    <div class="statusbar" id="statusbar"><span class="st" id="stText">Ready to swing</span><div class="bar" id="bar"><i id="barFill"></i></div><span class="pct" id="pct"></span></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<div id="toasts"></div>
+<div id="dropzone"><div><span>🍌</span>Drop the pack to import it</div></div>
+<div id="dead"><div><h2>The launcher was closed</h2><p style="color:var(--muted)">Start MonkeyBoyz Launcher again to keep playing.</p></div></div>
+<input type="file" id="filePack" accept=".zip,.mrpack" hidden>
+<input type="file" id="fileIcon" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+
+<script>
+"use strict";
+const T = new URLSearchParams(location.search).get("t") || "";
+const $ = id => document.getElementById(id);
+let S = null, sel = localStorage.getItem("sel") || "", logSeq = 0, lastNotice = -1, tab = "mods";
+let mods = null, modsFor = "", fails = 0, sigList = "", sigHero = "", autoScroll = true;
+
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in attrs || {}) {
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v; else if (k === "html") e.innerHTML = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(k));
+  return e;
+}
+
+// The MonkeyBoyz mascot: an original monkey in shades.
+function monkey(cls) {
+  return `<svg class="${cls || ""}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="15" cy="50" r="14" fill="#6f4420"/><circle cx="15" cy="50" r="8" fill="#e9bb8c"/>
+  <circle cx="85" cy="50" r="14" fill="#6f4420"/><circle cx="85" cy="50" r="8" fill="#e9bb8c"/>
+  <circle cx="50" cy="50" r="37" fill="#8a5526"/>
+  <path d="M43 14 q7 -9 9 1 q6 -7 6 3" fill="none" stroke="#6f4420" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="37" cy="45" r="16" fill="#f1c999"/><circle cx="63" cy="45" r="16" fill="#f1c999"/>
+  <ellipse cx="50" cy="66" rx="25" ry="19" fill="#f1c999"/>
+  <rect x="22" y="36" width="25" height="15" rx="7" fill="#17130e"/><rect x="53" y="36" width="25" height="15" rx="7" fill="#17130e"/>
+  <rect x="45" y="39" width="10" height="4" fill="#17130e"/>
+  <path d="M27 41 l8 0 M58 41 l8 0" stroke="#ffffff66" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="46" cy="60" rx="2" ry="1.4" fill="#6f4420"/><ellipse cx="54" cy="60" rx="2" ry="1.4" fill="#6f4420"/>
+  <path d="M35 68 Q50 83 65 68" fill="none" stroke="#6f4420" stroke-width="3.2" stroke-linecap="round"/>
+  </svg>`;
+}
+const hue = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+function fillIcon(box, inst) {
+  box.replaceChildren();
+  if (inst.icon) { box.style.background = ""; box.append(el("img", {src: `/api/instance/icon?id=${encodeURIComponent(inst.id)}&t=${T}&v=${encodeURIComponent(inst.icon)}`, alt: ""})); }
+  else { const h = hue(inst.name); box.style.background = `linear-gradient(140deg,hsl(${h} 55% 38%),hsl(${(h + 40) % 360} 60% 24%))`; box.innerHTML = monkey(); }
+}
+$("brandLogo").innerHTML = monkey(); $("bigLogo").innerHTML = monkey("big");
+document.head.append(el("link", {rel: "icon", href: "data:image/svg+xml," + encodeURIComponent(monkey())}));
+
+async function api(path, body) {
+  const opt = {headers: {"X-Token": T}};
+  if (body !== undefined) { opt.method = "POST"; opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.error || "Something went wrong"); e.code = j.code; throw e; }
+  return j;
+}
+function toast(text, kind) {
+  const t = el("div", {class: "toast " + (kind || ""), onclick: () => t.remove()}, text);
+  $("toasts").append(t); setTimeout(() => t.remove(), kind === "error" ? 16000 : 6000);
+}
+const attempt = async fn => { try { return await fn(); } catch (e) { toast(e.message, "error"); } };
+const gb = mb => (mb / 1024) % 1 ? (mb / 1024).toFixed(1) + " GB" : mb / 1024 + " GB";
+function ago(ts) {
+  if (!ts) return "never";
+  const s = Date.now() / 1000 - ts;
+  if (s < 90) return "just now"; if (s < 3600) return Math.round(s / 60) + " min ago";
+  if (s < 86400) return Math.round(s / 3600) + " h ago"; if (s < 86400 * 2) return "yesterday";
+  return Math.round(s / 86400) + " days ago";
+}
+const playtime = s => s < 60 ? "" : s < 3600 ? Math.round(s / 60) + " min" : Math.floor(s / 3600) + " h " + Math.round(s % 3600 / 60) + " min";
+const loaderName = i => i.loader === "vanilla" ? "Vanilla" : ({forge: "Forge", neoforge: "NeoForge", fabric: "Fabric", quilt: "Quilt"}[i.loader] || i.loader);
+const current = () => S && S.instances.find(i => i.id === sel);
+let sigChip = "";
+// The player's face, cut out of their Minecraft skin (face layer plus hat layer).
+function headAvatar(size) {
+  const name = S.settings.official_name || "?", box = el("div", {class: "av", style: `width:${size}px;height:${size}px`}, name[0].toUpperCase());
+  if (!S.settings.official_uuid) return box;
+  const img = new Image();
+  img.onload = () => {
+    const c = el("canvas", {width: 64, height: 64, style: "width:100%;height:100%;border-radius:inherit;image-rendering:pixelated"}), g = c.getContext("2d");
+    g.imageSmoothingEnabled = false; g.drawImage(img, 8, 8, 8, 8, 0, 0, 64, 64); g.drawImage(img, 40, 8, 8, 8, 0, 0, 64, 64);
+    box.style.background = "none"; box.style.overflow = "hidden"; box.replaceChildren(c);
+  };
+  img.src = `/api/official/skin?uuid=${S.settings.official_uuid}&t=${T}`;
+  return box;
+}
+
+// ---------------------------------------------------------------- polling
+async function tick() {
+  try {
+    const s = await api("/api/state?since=" + logSeq);
+    fails = 0; $("dead").classList.remove("on");
+    const first = !S; S = s;
+    if (first) lastNotice = s.notice.id;
+    appendLogs(s.logs); logSeq = s.log_seq;
+    if (s.notice.id !== lastNotice) {
+      lastNotice = s.notice.id; toast(s.notice.text, s.notice.kind);
+      if (s.notice.instance && s.instances.some(i => i.id === s.notice.instance)) select(s.notice.instance);
+      modsFor = "";
+      if (tab === "browse") search();
+    }
+    render();
+  } catch (e) { if (++fails > 4) $("dead").classList.add("on"); }
+  setTimeout(tick, S && (S.busy || S.running || S.ms_login) ? 400 : 900);
+}
+
+function appendLogs(lines) {
+  if (!lines.length) return;
+  const c = $("console"), frag = document.createDocumentFragment();
+  for (const l of lines) {
+    const cls = /ERROR|Exception|FATAL|\bat [\w.$]+\(/.test(l.text) ? "err" : /WARN/.test(l.text) ? "warn" : null;
+    frag.append(el("div", {class: cls}, l.text || " "));
+  }
+  c.append(frag);
+  while (c.childElementCount > 4000) c.firstChild.remove();
+  if (autoScroll) c.scrollTop = c.scrollHeight;
+}
+$("console").addEventListener("scroll", () => { const c = $("console"); autoScroll = c.scrollHeight - c.scrollTop - c.clientHeight < 40; });
+
+// ---------------------------------------------------------------- rendering
+function select(id) { sel = id; localStorage.setItem("sel", id); sigList = sigHero = ""; if (S) render(); }
+
+function render() {
+  if (!current() && S.instances.length) sel = S.instances[0].id;
+  const inst = current();
+  $("empty").style.display = inst ? "none" : ""; $("detail").style.display = inst ? "" : "none";
+
+  const ls = JSON.stringify([S.instances.map(i => [i.id, i.name, i.mc_version, i.loader, i.mods, i.icon, i.manual_count]), sel, S.running]);
+  if (ls !== sigList) {
+    sigList = ls;
+    $("instList").replaceChildren(...S.instances.map(i => {
+      const ic = el("div", {class: "icon", style: "width:40px;height:40px"}); fillIcon(ic, i);
+      return el("div", {class: "inst" + (i.id === sel ? " sel" : ""), onclick: () => select(i.id), ondblclick: () => play()},
+        ic, el("div", {class: "txt"}, el("div", {class: "nm"}, i.name),
+          el("div", {class: "sub"}, `${i.mc_version} · ${loaderName(i)}${i.mods ? " · " + i.mods + " mods" : ""}`)),
+        S.running === i.id ? el("span", {class: "live", title: "Running"}) : null);
+    }));
+    if (!S.instances.length) $("instList").append(el("div", {class: "hint"}, "No packs yet. Import one to get started."));
+  }
+
+  const acct = S.accounts[S.selected_account], viaOff = S.settings.play_via === "official", on = S.settings.official_name;
+  const cs = JSON.stringify([acct, viaOff, on, S.settings.official_uuid]);
+  if (cs !== sigChip) {
+    sigChip = cs;
+    $("acctChip").replaceChildren(
+      viaOff && on ? headAvatar(30) : el("div", {class: "av"}, viaOff ? "M" : acct ? acct.name[0].toUpperCase() : "?"),
+      el("div", {class: "who"}, el("b", {}, viaOff ? (on || "Minecraft Launcher") : acct ? acct.name : "Sign in"),
+        el("small", {}, viaOff ? (on ? "Signed in via Minecraft Launcher" : "You sign in there") : acct ? (acct.type === "microsoft" ? "Microsoft account" : "Offline player") : "No account yet")));
+  }
+
+  const sb = $("statusbar"), p = S.progress, working = S.busy;
+  sb.classList.toggle("busy", working);
+  const pctv = p.total > 0 ? Math.round(p.done * 100 / p.total) : null;
+  $("stText").textContent = working ? (p.label ? `${S.status} — ${p.label}` : S.status)
+    : S.running ? "Playing " + (S.instances.find(i => i.id === S.running) || {name: ""}).name : "Ready to swing 🐒";
+  $("bar").classList.toggle("ind", working && pctv === null);
+  $("barFill").style.width = (pctv === null ? 28 : Math.max(pctv, 2)) + "%";
+  $("pct").textContent = working && pctv !== null ? `${p.done}/${p.total}` : "";
+
+  if (inst) {
+    const hs = JSON.stringify([inst, S.running, S.busy, S.settings.memory_mb, S.ram_options, S.settings.play_via]);
+    if (hs !== sigHero) {
+      sigHero = hs;
+      fillIcon($("heroIcon"), inst);
+      $("heroName").textContent = inst.name; $("heroName").title = inst.name;
+      const chips = [["Minecraft", inst.mc_version], [loaderName(inst), inst.loader === "vanilla" ? "" : inst.loader_version]];
+      if (inst.pack && inst.pack.version) chips.push(["Pack", "v" + inst.pack.version]);
+      if (inst.pack && inst.pack.author) chips.push(["By", inst.pack.author]);
+      chips.push(["Played", ago(inst.last_played)]);
+      if (playtime(inst.play_seconds)) chips.push(["Total", playtime(inst.play_seconds)]);
+      $("heroChips").replaceChildren(...chips.map(([k, v]) => el("span", {class: "chip"}, v ? k + " " : k, v ? el("b", {}, v) : null)));
+      if (inst.manual_count) $("heroChips").append(el("span", {class: "chip warn", onclick: () => setTab("manual")}, inst.manual_count + " missing file(s)"));
+      const b = $("btnPlay"), mine = S.running === inst.id;
+      b.textContent = mine ? "STOP" : S.busy ? "WORKING…" : "PLAY";
+      b.classList.toggle("stop", mine); b.disabled = !mine && (S.busy || !!S.running);
+      const rs = $("ramSel");
+      if (document.activeElement !== rs) {
+        rs.replaceChildren(el("option", {value: 0}, `Default (${gb(S.settings.memory_mb)})`), ...S.ram_options.map(m => el("option", {value: m}, gb(m))));
+        if (inst.memory_mb && !S.ram_options.includes(inst.memory_mb)) rs.append(el("option", {value: inst.memory_mb}, gb(inst.memory_mb)));
+        rs.value = inst.memory_mb || 0;
+      }
+      const off = S.settings.play_via === "official";
+      $("viaHint").textContent = off ? "Opens in the Minecraft Launcher" : "Starts the game directly";
+      $("altPlay").textContent = off ? "Play directly (offline player)" : "Play with the Minecraft Launcher";
+      $("nMods").textContent = inst.mods;
+      $("tabManual").style.display = inst.manual_count ? "" : "none"; $("nManual").textContent = inst.manual_count;
+      if (!inst.manual_count && tab === "manual") setTab("mods");
+    }
+    if (modsFor !== inst.id) loadMods();
+    if (tab === "browse" && browseFor !== inst.id) { $("browseList").replaceChildren(); search(); }
+  }
+  renderMS();
+}
+
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x.dataset.tab === t));
+  document.querySelectorAll(".pane").forEach(x => x.classList.toggle("on", x.id === "pane-" + t));
+  if (t === "browse") search();
+  if (t === "console") { autoScroll = true; $("console").scrollTop = $("console").scrollHeight; }
+}
+document.querySelectorAll(".tab").forEach(x => x.onclick = () => setTab(x.dataset.tab));
+
+// ---------------------------------------------------------------- mods
+async function loadMods() {
+  const inst = current(); if (!inst) return;
+  modsFor = inst.id;
+  try { const m = await api("/api/mods?id=" + encodeURIComponent(inst.id)); if (modsFor === inst.id) { mods = m; renderMods(); } } catch (e) { modsFor = ""; }
+}
+function renderMods() {
+  const inst = current(); if (!inst || !mods) return;
+  const q = $("modSearch").value.trim().toLowerCase();
+  const list = mods.mods.filter(m => !q || (m.name + " " + m.file + " " + m.author).toLowerCase().includes(q));
+  const off = mods.mods.filter(m => !m.enabled).length;
+  const extra = [mods.resourcepacks ? mods.resourcepacks + " resource pack(s)" : "", mods.shaderpacks ? mods.shaderpacks + " shader pack(s)" : ""].filter(Boolean).join(" · ");
+  $("modInfo").textContent = `${mods.mods.length} mods${off ? ` · ${off} switched off` : ""}${extra ? " · " + extra : ""}`;
+  $("btnAllOn").style.display = off ? "" : "none";
+  const box = $("modList");
+  if (!mods.mods.length) {
+    box.replaceChildren(el("div", {class: "hint"}, el("span", {class: "big"}, "🍃"),
+      inst.loader === "vanilla" ? "This is plain Minecraft, so there are no mods here." : "No mods in this instance yet. Drop mod .jar files into the mods folder."));
+    if (mods.pack_list && mods.pack_list.length) box.append(...mods.pack_list.map(p => el("div", {class: "mod"}, el("div", {class: "mi"}, "🍌"), el("div", {class: "mt"}, el("div", {class: "a"}, p.name)))));
+    return;
+  }
+  box.replaceChildren(...list.map(m => {
+    const mi = el("div", {class: "mi"});
+    const src = m.logo || (m.has_icon ? `/api/modicon?id=${encodeURIComponent(inst.id)}&file=${encodeURIComponent(m.file)}&t=${T}` : "");
+    if (src) { const img = el("img", {src, loading: "lazy", alt: ""}); img.onerror = () => { mi.textContent = "🍌"; }; mi.append(img); } else mi.textContent = "🍌";
+    const sw = el("div", {class: "sw" + (m.enabled ? " on" : ""), title: m.enabled ? "Switch this mod off" : "Switch this mod on", onclick: async () => {
+      if (S.running === inst.id) return toast("Close the game before changing mods.", "error");
+      await attempt(() => api("/api/mods/toggle", {id: inst.id, file: m.file, enabled: !m.enabled}));
+      sigHero = ""; loadMods();
+    }});
+    return el("div", {class: "mod" + (m.enabled ? "" : " off")}, mi,
+      el("div", {class: "mt"}, el("div", {class: "a"}, m.name, m.version ? el("small", {}, m.version) : null, m.author ? el("small", {}, "by " + m.author) : null),
+        el("div", {class: "b", title: m.file}, m.description || m.file)),
+      m.url ? el("span", {class: "link", onclick: () => api("/api/openurl", {url: m.url})}, "CurseForge ↗") : null, sw);
+  }));
+  if (!list.length) box.append(el("div", {class: "hint"}, "No mods match that search."));
+
+  $("manualList").replaceChildren(...mods.manual.map(m => el("div", {class: "mod"}, el("div", {class: "mi"}, "📦"),
+    el("div", {class: "mt"}, el("div", {class: "a"}, m.name, m.file_name ? el("small", {}, m.file_name) : null),
+      el("div", {class: "b"}, `${m.reason}. Goes in the ${m.folder} folder.`)),
+    el("button", {class: "btn sm banana", onclick: () => api("/api/openurl", {url: m.url})}, "Open download page ↗"))));
+}
+$("modSearch").oninput = renderMods;
+$("btnAllOn").onclick = async () => { const i = current(); await attempt(() => api("/api/mods/toggle", {id: i.id, all: true, enabled: true})); loadMods(); };
+$("btnModsFolder").onclick = () => attempt(() => api("/api/open", {id: sel, what: "mods"}));
+$("btnLogs").onclick = () => attempt(() => api("/api/open", {id: sel, what: "logs"}));
+$("btnCopyLog").onclick = () => navigator.clipboard.writeText($("console").innerText).then(() => toast("Console copied."));
+$("btnCheckManual").onclick = async () => {
+  const r = await attempt(() => api("/api/manual/check", {id: sel})); if (!r) return;
+  toast(r.found ? `Found ${r.found} file(s). ${r.missing ? r.missing + " still missing." : "All set!"}` : "Nothing new in your Downloads folder yet.");
+  sigHero = ""; loadMods();
+};
+
+// ---------------------------------------------------------------- search (Modrinth and CurseForge)
+let src = "modrinth", searchSeq = 0, searchTimer = 0, browseFor = "";
+const compact = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : "" + n;
+async function search() {
+  const inst = current(); if (!inst) return;
+  browseFor = inst.id;
+  const seq = ++searchSeq, box = $("browseList"), kind = $("kindSel").value, q = $("browseQ").value.trim();
+  $("browseInfo").textContent = `For Minecraft ${inst.mc_version}${kind === "mod" && inst.loader !== "vanilla" ? " · " + loaderName(inst) : ""}`;
+  if (!box.childElementCount) box.replaceChildren(el("div", {class: "hint"}, "Searching…"));
+  let r;
+  try { r = await api(`/api/search?id=${encodeURIComponent(inst.id)}&source=${src}&kind=${kind}&q=${encodeURIComponent(q)}`); }
+  catch (e) {
+    if (seq !== searchSeq) return;
+    box.replaceChildren(el("div", {class: "hint"}, el("span", {class: "big"}, e.code === "need_cf_key" ? "🔑" : "🙈"), e.message,
+      e.code === "need_cf_key" ? el("div", {style: "margin-top:12px"}, el("button", {class: "btn banana", onclick: settingsModal}, "Open Settings")) : null));
+    return;
+  }
+  if (seq !== searchSeq) return;
+  if (!r.results.length) return box.replaceChildren(el("div", {class: "hint"}, el("span", {class: "big"}, "🍃"), q ? "Nothing found for that search on this Minecraft version." : "Nothing to show."));
+  box.replaceChildren(...r.results.map(h => {
+    const mi = el("div", {class: "mi"});
+    if (h.icon) { const img = el("img", {src: h.icon, loading: "lazy", alt: ""}); img.onerror = () => { mi.textContent = "🍌"; }; mi.append(img); } else mi.textContent = "🍌";
+    const btn = h.installed ? el("button", {class: "btn sm", disabled: true}, "Installed ✓")
+      : el("button", {class: "btn sm banana", onclick: async () => {
+          btn.disabled = true; btn.textContent = "Installing…";
+          try { await api("/api/search/install", {id: inst.id, source: h.source, project: h.id, kind, name: h.name}); }
+          catch (e) { toast(e.message, "error"); btn.disabled = false; btn.textContent = "Install"; }
+        }}, "Install");
+    return el("div", {class: "mod"}, mi,
+      el("div", {class: "mt"}, el("div", {class: "a"}, h.name, h.author ? el("small", {}, "by " + h.author) : null), el("div", {class: "b", title: h.summary}, h.summary)),
+      el("span", {class: "dl"}, compact(h.downloads) + " downloads"),
+      h.url ? el("span", {class: "link", onclick: () => api("/api/openurl", {url: h.url})}, "Page ↗") : null, btn);
+  }));
+}
+$("browseQ").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(search, 350); };
+$("kindSel").onchange = () => { if ($("kindSel").value === "modpack") { $("kindSel").value = "mod"; packsModal(); } else search(); };
+$("srcSeg").onclick = e => { const s = e.target.dataset.src; if (!s) return; src = s; $("srcSeg").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.src === s)); $("browseList").replaceChildren(); search(); };
+
+// ---------------------------------------------------------------- actions
+async function play(via) {
+  const inst = current(); if (!inst) return;
+  if (typeof via !== "string") via = "";
+  if (S.running === inst.id) return attempt(() => api("/api/stop", {}));
+  try { await api("/api/play", {id: inst.id, via}); setTab("console"); }
+  catch (e) { if (e.code === "no_account") { toast("Add an account first, then press Play."); accountsModal(); } else toast(e.message, "error"); }
+}
+$("btnPlay").onclick = () => play();
+$("ramSel").onchange = () => attempt(() => api("/api/instance/update", {id: sel, memory_mb: +$("ramSel").value})).then(() => { $("ramSel").blur(); sigHero = ""; });
+
+async function upload(file) {
+  if (!file) return;
+  if (!/\.(zip|mrpack)$/i.test(file.name)) return toast("Pick a CurseForge export (.zip) or a Modrinth pack (.mrpack).", "error");
+  if (S.busy) return toast("Hang on, the launcher is still busy.", "error");
+  toast("Reading " + file.name + "…");
+  try {
+    const r = await fetch("/api/import", {method: "POST", headers: {"X-Token": T, "X-Filename": encodeURIComponent(file.name)}, body: file});
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "Import failed");
+    setTab("console");
+  } catch (e) { toast(e.message, "error"); }
+}
+$("btnImport").onclick = $("btnImport2").onclick = () => { $("filePack").value = ""; $("filePack").click(); };
+$("filePack").onchange = e => upload(e.target.files[0]);
+let dragDepth = 0;
+addEventListener("dragenter", e => { if ([...e.dataTransfer.types].includes("Files")) { dragDepth++; $("dropzone").classList.add("on"); } });
+addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; $("dropzone").classList.remove("on"); } });
+addEventListener("dragover", e => e.preventDefault());
+addEventListener("drop", e => { e.preventDefault(); dragDepth = 0; $("dropzone").classList.remove("on"); upload(e.dataTransfer.files[0]); });
+
+$("heroIcon").onclick = () => { $("fileIcon").value = ""; $("fileIcon").click(); };
+$("fileIcon").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = await fetch(`/api/instance/icon?id=${encodeURIComponent(sel)}`, {method: "POST", headers: {"X-Token": T}, body: f});
+  if (!r.ok) toast((await r.json().catch(() => ({}))).error || "Could not use that picture.", "error");
+};
+$("btnMore").onclick = e => { e.stopPropagation(); const m = $("moreMenu"), r = $("btnMore").getBoundingClientRect(), d = $("detail").getBoundingClientRect();
+  m.style.top = r.bottom - d.top + 6 + "px"; m.style.right = d.right - r.right + "px"; m.classList.toggle("on"); };
+addEventListener("click", () => $("moreMenu").classList.remove("on"));
+$("moreMenu").onclick = e => {
+  const act = e.target.dataset.act, inst = current(); if (!act || !inst) return;
+  if (act === "altplay") play(S.settings.play_via === "official" ? "builtin" : "official");
+  else if (act === "folder") attempt(() => api("/api/open", {id: inst.id, what: "folder"}));
+  else if (act === "saves" || act === "screenshots") attempt(() => api("/api/open", {id: inst.id, what: act}));
+  else if (act === "icon") $("heroIcon").click();
+  else if (act === "iconreset") fetch(`/api/instance/icon?id=${encodeURIComponent(inst.id)}`, {method: "DELETE", headers: {"X-Token": T}});
+  else if (act === "rename") renameModal(inst);
+  else if (act === "delete") deleteModal(inst);
+};
+
+// ---------------------------------------------------------------- modals
+let modalKind = "";
+function openModal(kind, ...kids) { modalKind = kind; $("modal").classList.toggle("wide", kind === "packs"); $("modal").replaceChildren(...kids.filter(k => k != null && k !== false)); $("scrim").classList.add("on"); const f = $("modal").querySelector("input,select"); if (f) f.focus(); }
+function closeModal() { modalKind = ""; $("scrim").classList.remove("on"); }
+$("scrim").addEventListener("mousedown", e => { if (e.target === $("scrim") && modalKind !== "ms") closeModal(); });
+addEventListener("keydown", e => { if (e.key === "Escape" && modalKind && modalKind !== "ms") closeModal(); });
+const row = (label, input, help) => el("div", {class: "row"}, el("label", {}, label), input, help ? el("small", {}, help) : null);
+
+function renameModal(inst) {
+  const inp = el("input", {type: "text", value: inst.name, maxlength: 60});
+  const save = async () => { if (await attempt(() => api("/api/instance/update", {id: inst.id, name: inp.value}))) closeModal(); };
+  inp.onkeydown = e => { if (e.key === "Enter") save(); };
+  openModal("rename", el("h3", {}, "Rename"), row("Name", inp), el("div", {class: "foot"}, el("button", {class: "btn", onclick: closeModal}, "Cancel"), el("button", {class: "btn banana", onclick: save}, "Save")));
+  inp.select();
+}
+function deleteModal(inst) {
+  openModal("delete", el("h3", {}, `Delete ${inst.name}?`), el("p", {}, "This removes the instance with its mods, settings and worlds. It cannot be undone."),
+    el("div", {class: "foot"}, el("button", {class: "btn", onclick: closeModal}, "Keep it"),
+      el("button", {class: "btn danger", onclick: async () => { if (await attempt(() => api("/api/instance/delete", {id: inst.id}))) { closeModal(); sel = ""; } }}, "Delete")));
+}
+function settingsModal() {
+  const s = S.settings;
+  const ram = el("select", {}, ...S.ram_options.map(m => el("option", {value: m}, gb(m))));
+  if (!S.ram_options.includes(s.memory_mb)) ram.append(el("option", {value: s.memory_mb}, gb(s.memory_mb)));
+  ram.value = s.memory_mb;
+  const java = el("input", {type: "text", value: s.java_path, placeholder: "Automatic (recommended)"});
+  const jvm = el("input", {type: "text", value: s.jvm_args, placeholder: "None"});
+  const cf = el("input", {type: "password", value: s.curseforge_api_key, placeholder: s.cf_ready && !s.curseforge_api_key ? "Already built in" : "Paste your key"});
+  const ms = el("input", {type: "text", value: s.ms_client_id, placeholder: s.ms_ready && !s.ms_client_id ? "Already built in" : "Paste the Application (client) ID"});
+  const dOn = el("select", {}, el("option", {value: "1"}, "Show what I am playing"), el("option", {value: "0"}, "Off"));
+  dOn.value = s.discord_on ? "1" : "0";
+  const dId = el("input", {type: "text", value: s.discord_app_id, placeholder: s.discord_ready && !s.discord_app_id ? "Already built in" : "Paste the Application ID"});
+  const via = el("select", {}, el("option", {value: "official"}, "The Minecraft Launcher (your Microsoft account)"), el("option", {value: "builtin"}, "This launcher directly (offline player)"));
+  via.value = s.play_via;
+  openModal("settings", el("h3", {}, "Settings"),
+    row("Play using", via, s.official_available ? "The Minecraft Launcher signs you in, so you can join any server." : "The Minecraft Launcher was not found on this computer. Install it and open it once to use this."),
+    row("Default memory", ram, S.system_ram_mb ? `This computer has ${gb(Math.round(S.system_ram_mb / 1024) * 1024)}. Each pack can also have its own setting.` : "Each pack can also have its own setting."),
+    row("CurseForge API key", cf, "Free. Makes imports faster and shows mod names and pictures."),
+    row("", el("span", {class: "link", onclick: () => api("/api/openurl", {url: "https://console.curseforge.com/"})}, "Get a key at console.curseforge.com ↗")),
+    row("Microsoft client ID", ms, "Needed once for Microsoft sign-in."),
+    row("Discord status", dOn, s.discord_live ? "Connected to Discord." : s.discord_ready ? "Shows what you are playing when Discord is open." : "Needs a Discord application ID (below) to work."),
+    row("Discord app ID", dId, "Free, one per group. The application's name is what Discord shows after \u201cPlaying\u201d."),
+    row("", el("span", {class: "link", onclick: () => api("/api/openurl", {url: "https://discord.com/developers/applications"})}, "Create one at discord.com/developers ↗")),
+    row("Java program", java, "Leave empty and the launcher downloads the right Java for each pack."),
+    row("Extra Java options", jvm),
+    row("Data folder", el("span", {class: "link", onclick: () => api("/api/open", {what: "data"})}, s.data_dir)),
+    el("div", {class: "foot"}, el("span", {style: "margin-right:auto;color:var(--dim);align-self:center"}, `${S.app} ${S.version}`),
+      el("button", {class: "btn", onclick: closeModal}, "Cancel"),
+      el("button", {class: "btn banana", onclick: async () => {
+        if (await attempt(() => api("/api/settings", {memory_mb: +ram.value, java_path: java.value, jvm_args: jvm.value, curseforge_api_key: cf.value, ms_client_id: ms.value, discord_on: dOn.value === "1", discord_app_id: dId.value, play_via: via.value}))) { closeModal(); sigHero = ""; }
+      }}, "Save")));
+}
+$("btnSettings").onclick = settingsModal;
+
+function accountsModal() {
+  const draw = () => {
+    const name = el("input", {type: "text", placeholder: "Player name", maxlength: 16, style: "flex:1"});
+    const addOff = async () => { if (await attempt(() => api("/api/account/offline", {name: name.value}))) { await refresh(); draw(); } };
+    name.onkeydown = e => { if (e.key === "Enter") addOff(); };
+    const s = S.settings, offCard = s.official_name ? el("div", {class: "acctrow" + (s.play_via === "official" ? " sel" : ""), style: "cursor:default"},
+      headAvatar(32), el("b", {}, s.official_name), el("span", {class: "tag ms"}, "Minecraft Launcher")) : null;
+    openModal("accounts", el("h3", {}, "Accounts"), offCard,
+      el("p", {}, S.settings.play_via === "official" ? "You are set to play through the Minecraft Launcher, which signs you in itself, so no account is needed here. The accounts below are only used when you choose \u201cPlay directly\u201d." : "Offline players work in single player and on offline-mode servers. To use your Microsoft account, choose \u201cPlay using: The Minecraft Launcher\u201d in Settings."),
+      ...S.accounts.map((a, i) => el("div", {class: "acctrow" + (i === S.selected_account ? " sel" : ""), onclick: async () => { await api("/api/account/select", {index: i}); await refresh(); draw(); }},
+        el("div", {class: "av"}, a.name[0].toUpperCase()), el("b", {}, a.name),
+        el("span", {class: "tag" + (a.type === "microsoft" ? " ms" : "")}, a.type === "microsoft" ? "Microsoft" : "Offline"),
+        el("button", {class: "btn sm danger", onclick: async e => { e.stopPropagation(); await api("/api/account/remove", {index: i}); await refresh(); draw(); }}, "Remove"))),
+      S.accounts.length ? null : el("div", {class: "hint"}, "No accounts yet."),
+      el("div", {style: "display:flex;gap:8px;margin-top:14px"},
+        el("button", {class: "btn banana", style: "flex:1", onclick: msSignIn}, "Sign in with Microsoft")),
+      el("div", {style: "display:flex;gap:8px;margin-top:8px"}, name, el("button", {class: "btn", onclick: addOff}, "Add offline player")),
+      el("div", {class: "foot"}, el("button", {class: "btn", onclick: closeModal}, "Done")));
+  };
+  draw();
+}
+$("acctChip").onclick = accountsModal;
+async function refresh() { S = await api("/api/state?since=" + logSeq); appendLogs(S.logs); logSeq = S.log_seq; render(); }
+
+async function msSignIn() {
+  try { await api("/api/account/ms/start", {}); await refresh(); }
+  catch (e) { if (e.code === "need_client_id") clientIdModal(); else toast(e.message, "error"); }
+}
+function clientIdModal() {
+  const inp = el("input", {type: "text", placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"});
+  const open = url => () => api("/api/openurl", {url});
+  openModal("clientid", el("h3", {}, "One-time setup for Microsoft sign-in"),
+    el("p", {}, "Microsoft only lets a launcher sign people in to Minecraft once the launcher has its own approved app ID. One of the MonkeyBoyz does this once; everyone else just pastes the same ID."),
+    el("ol", {},
+      el("li", {}, "Register a free app: ", el("span", {class: "link", onclick: open("https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade")}, "Azure app registrations ↗"),
+        ". Choose “Personal Microsoft accounts only”, then under Authentication turn on “Allow public client flows”."),
+      el("li", {}, "Ask Mojang to approve it for Minecraft: ", el("span", {class: "link", onclick: open("https://help.minecraft.net/hc/en-us/articles/16254801392141")}, "Minecraft help article with the form ↗"), "."),
+      el("li", {}, "Paste the Application (client) ID below.")),
+    row("Client ID", inp),
+    el("div", {class: "foot"}, el("button", {class: "btn", onclick: accountsModal}, "Back"),
+      el("button", {class: "btn banana", onclick: async () => {
+        if (!inp.value.trim()) return toast("Paste the client ID first.", "error");
+        if (await attempt(() => api("/api/settings", {ms_client_id: inp.value}))) { closeModal(); msSignIn(); }
+      }}, "Save and sign in")));
+}
+function renderMS() {
+  const m = S.ms_login;
+  if (m && modalKind !== "ms") {
+    openModal("ms", el("h3", {}, "Sign in with Microsoft"),
+      el("p", {}, "A Microsoft page opened in your browser. Enter this code there and approve the sign-in. This window finishes by itself."),
+      el("div", {class: "code"}, m.code),
+      el("div", {class: "foot"},
+        el("button", {class: "btn", onclick: () => api("/api/account/ms/cancel", {})}, "Cancel"),
+        el("button", {class: "btn", onclick: () => api("/api/openurl", {url: m.url})}, "Open the page again"),
+        el("button", {class: "btn banana", onclick: () => navigator.clipboard.writeText(m.code).then(() => toast("Code copied."))}, "Copy code")));
+  } else if (!m && modalKind === "ms") closeModal();
+}
+
+async function newModal() {
+  const name = el("input", {type: "text", placeholder: "My pack", maxlength: 60});
+  const mc = el("input", {type: "text", placeholder: "1.20.1", list: "mcList"}), mcList = el("datalist", {id: "mcList"});
+  const loader = el("select", {}, ...["vanilla", "forge", "neoforge", "fabric", "quilt"].map(l => el("option", {value: l}, loaderName({loader: l}))));
+  const lv = el("input", {type: "text", placeholder: "Loader version", list: "lvList"}), lvList = el("datalist", {id: "lvList"});
+  const lvRow = row("Loader version", lv, "Suggestions appear once a Minecraft version is chosen."); lvRow.style.display = "none";
+  const suggest = async () => {
+    lvRow.style.display = loader.value === "vanilla" ? "none" : "";
+    if (loader.value === "vanilla" || !mc.value.trim()) return;
+    const r = await api(`/api/loaderversions?mc=${encodeURIComponent(mc.value.trim())}&loader=${loader.value}`).catch(() => ({versions: []}));
+    lvList.replaceChildren(...r.versions.map(v => el("option", {value: v})));
+    if (r.versions.length) lv.value = r.versions[0];
+  };
+  loader.onchange = mc.onchange = suggest;
+  openModal("new", el("h3", {}, "New instance"), el("p", {}, "Start from scratch and add your own mods."),
+    row("Name", name), row("Minecraft version", mc), row("Mod loader", loader), lvRow, mcList, lvList,
+    el("div", {class: "foot"}, el("button", {class: "btn", onclick: closeModal}, "Cancel"),
+      el("button", {class: "btn banana", onclick: async () => {
+        const r = await attempt(() => api("/api/instance/create", {name: name.value, mc: mc.value, loader: loader.value, loader_version: lv.value}));
+        if (r) { closeModal(); await refresh(); select(r.id); }
+      }}, "Create")));
+  api("/api/mcversions").then(r => { mcList.replaceChildren(...r.versions.map(v => el("option", {value: v}))); if (!mc.value && r.versions[0]) mc.placeholder = r.versions[0]; }).catch(() => {});
+}
+$("btnNew").onclick = newModal;
+
+// Find whole modpacks on Modrinth and CurseForge.
+function packsModal() {
+  let psrc = "modrinth", seq = 0, timer = 0;
+  const q = el("input", {type: "search", placeholder: "Search modpacks…", style: "flex:1"}), list = el("div", {id: "packList"});
+  const seg = el("div", {class: "seg"}, el("button", {"data-src": "modrinth", class: "on"}, "Modrinth"), el("button", {"data-src": "curseforge"}, "CurseForge"));
+  const run = async () => {
+    const my = ++seq; let r;
+    if (!list.childElementCount) list.replaceChildren(el("div", {class: "hint"}, "Searching…"));
+    try { r = await api(`/api/packsearch?source=${psrc}&q=${encodeURIComponent(q.value.trim())}`); }
+    catch (e) {
+      if (my !== seq) return;
+      return list.replaceChildren(el("div", {class: "hint"}, el("span", {class: "big"}, e.code === "need_cf_key" ? "🔑" : "🙈"), e.message,
+        e.code === "need_cf_key" ? el("div", {style: "margin-top:12px"}, el("button", {class: "btn banana", onclick: settingsModal}, "Open Settings")) : null));
+    }
+    if (my !== seq) return;
+    if (!r.results.length) return list.replaceChildren(el("div", {class: "hint"}, el("span", {class: "big"}, "🍃"), "No modpacks found."));
+    list.replaceChildren(...r.results.map(h => {
+      const mi = el("div", {class: "mi", style: "width:52px;height:52px"});
+      if (h.icon) { const img = el("img", {src: h.icon, loading: "lazy", alt: ""}); img.onerror = () => { mi.textContent = "🍌"; }; mi.append(img); } else mi.textContent = "🍌";
+      const btn = el("button", {class: "btn sm banana", onclick: async () => {
+        if (S.busy) return toast("Hang on, the launcher is still busy.", "error");
+        try { await api("/api/packsearch/install", {source: h.source, project: h.id, name: h.name}); closeModal(); setTab("console"); toast("Installing " + h.name + "…"); }
+        catch (e) { toast(e.message, "error"); }
+      }}, "Install");
+      return el("div", {class: "mod"}, mi,
+        el("div", {class: "mt"}, el("div", {class: "a"}, h.name, h.author ? el("small", {}, "by " + h.author) : null), el("div", {class: "b", title: h.summary}, h.summary)),
+        el("span", {class: "dl"}, compact(h.downloads) + " downloads"),
+        h.url ? el("span", {class: "link", onclick: () => api("/api/openurl", {url: h.url})}, "Page ↗") : null, btn);
+    }));
+  };
+  q.oninput = () => { clearTimeout(timer); timer = setTimeout(run, 350); };
+  seg.onclick = e => { const s = e.target.dataset.src; if (!s) return; psrc = s; seg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.src === s)); list.replaceChildren(); run(); };
+  openModal("packs", el("h3", {}, "Find modpacks"),
+    el("div", {style: "display:flex;gap:8px;align-items:center;margin:12px 0 8px"}, seg, q, el("button", {class: "btn", onclick: closeModal}, "Close")), list);
+  q.focus(); run();
+}
+$("btnBrowse").onclick = $("btnBrowse2").onclick = packsModal;
+
+addEventListener("pagehide", () => navigator.sendBeacon("/api/bye?t=" + T));
+tick();
+</script>
+</body>
+</html>

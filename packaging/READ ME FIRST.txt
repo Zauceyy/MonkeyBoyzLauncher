@@ -1,0 +1,21 @@
+MonkeyBoyz Launcher
+===================
+
+INSTALL
+1. Extract this zip first (right-click > Extract All). Do not run Setup from inside the zip.
+2. Double-click "MonkeyBoyz Launcher Setup".
+3. Windows may say "Windows protected your PC" because the program is not code-signed.
+   Click "More info", then "Run anyway".
+4. Click Yes. A MonkeyBoyz Launcher shortcut appears on your Desktop and in the Start Menu.
+No administrator password is needed.
+
+PLAY
+1. You need the normal Minecraft Launcher installed and opened at least once (signed in).
+2. Export a profile in the CurseForge app (profile menu > Export Profile) and drop the zip
+   onto the MonkeyBoyz Launcher window.
+3. Press PLAY in MonkeyBoyz Launcher. The Minecraft Launcher opens by itself with the pack
+   selected (if it was already open, it is restarted). Press Play there.
+
+REMOVE
+Windows Settings > Apps > Installed apps > MonkeyBoyz Launcher > Uninstall.
+Your packs and worlds stay in %APPDATA%\MonkeyBoyzLauncher until you delete that folder.

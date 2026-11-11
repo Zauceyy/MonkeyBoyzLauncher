@@ -1,0 +1,7 @@
+*.exe
+*.zip
+/dist/
+/setup/MonkeyBoyzLauncher.exe
+ms_client_id.txt
+discord_app_id.txt
+curseforge_api_key.txt
