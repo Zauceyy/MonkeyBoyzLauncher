@@ -21,7 +21,7 @@ var payload []byte
 
 const (
 	appTitle   = "MonkeyBoyz Launcher"
-	appVersion = "2.4.3"
+	appVersion = "2.5.0"
 	regKey     = `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MonkeyBoyzLauncher`
 
 	mbYesNo, mbQuestion, mbInfo, mbError, idYes = 0x4, 0x20, 0x40, 0x10, 6

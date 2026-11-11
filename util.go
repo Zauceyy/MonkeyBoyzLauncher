@@ -19,7 +19,7 @@ import (
 
 const (
 	appName    = "MonkeyBoyz Launcher"
-	appVersion = "2.4.3"
+	appVersion = "2.5.0"
 	userAgent  = "MonkeyBoyzLauncher/" + appVersion
 )
 

@@ -1,5 +1,5 @@
 # Builds the Windows installer zip and attaches it to a GitHub release.
-# Run it by pushing a tag such as v2.4.3, or from the Actions tab ("Run workflow").
+# Run it from the Actions tab ("Run workflow"); the zip appears as a build artifact.
 # Optional repository secrets (Settings > Secrets and variables > Actions):
 #   CURSEFORGE_API_KEY  built into the launcher so nobody has to paste a key
 #   MS_CLIENT_ID        Mojang-approved Azure app id for in-launcher Microsoft sign-in
@@ -7,8 +7,6 @@
 name: Release
 
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:

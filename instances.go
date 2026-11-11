@@ -87,6 +87,7 @@ type ManualItem struct {
 	Folder   string `json:"folder"`
 	URL      string `json:"url"`
 	Reason   string `json:"reason"`
+	SHA1     string `json:"sha1,omitempty"`
 }
 
 type Instance struct {

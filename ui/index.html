@@ -239,8 +239,8 @@ select{cursor:pointer}
         <div id="console"></div>
       </div>
       <div class="pane" id="pane-manual">
-        <div class="toolbar"><span class="info">These files can only be downloaded from the CurseForge site. Download each one, leave it in your Downloads folder, then press Check.</span>
-          <button class="btn sm banana" id="btnCheckManual">Check Downloads</button></div>
+        <div class="toolbar"><span class="info">These files can only be downloaded from the CurseForge site. Download each one, leave it in your Downloads folder, then press Check again. (It also looks for the same files on Modrinth.)</span>
+          <button class="btn sm banana" id="btnCheckManual" title="Looks on Modrinth and in your Downloads folder">Check again</button></div>
         <div id="manualList"></div>
       </div>
       <div class="menu" id="moreMenu">
@@ -516,7 +516,7 @@ $("btnLogs").onclick = () => attempt(() => api("/api/open", {id: sel, what: "log
 $("btnCopyLog").onclick = () => navigator.clipboard.writeText($("console").innerText).then(() => toast("Console copied."));
 $("btnCheckManual").onclick = async () => {
   const r = await attempt(() => api("/api/manual/check", {id: sel})); if (!r) return;
-  toast(r.found ? `Found ${r.found} file(s). ${r.missing ? r.missing + " still missing." : "All set!"}` : "Nothing new in your Downloads folder yet.");
+  toast(r.found ? `Found ${r.found} file(s). ${r.missing ? r.missing + " still missing." : "All set!"}` : "Nothing new on Modrinth or in your Downloads folder yet.");
   sigHero = ""; loadMods();
 };
 

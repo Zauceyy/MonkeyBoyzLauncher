@@ -694,6 +694,8 @@ func (a *App) routes() http.Handler {
 			return nil, err
 		}
 		before := len(inst.Manual)
+		cfg := a.workConfig()
+		resolveManualViaModrinth(inst, cfg.CurseForgeAPIKey, a.logf)
 		still := collectManual(inst, a.logf)
 		return M{"found": before - len(still), "missing": len(still)}, nil
 	})

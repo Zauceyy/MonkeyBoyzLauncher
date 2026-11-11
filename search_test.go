@@ -290,3 +290,65 @@ func TestRezippedPacks(t *testing.T) {
 		t.Fatal("a zip with no pack near its top level should be refused")
 	}
 }
+
+// Files that CurseForge will not hand to launchers are fetched from Modrinth when the identical file is there.
+func TestModrinthFallbackForBlockedFiles(t *testing.T) {
+	tmp := t.TempDir()
+	retryDelay = time.Millisecond
+	prepareAfterImport = false
+	defer func() { prepareAfterImport = true }()
+	rt := &pathRT{handlers: map[string]func(*http.Request) (int, []byte){}}
+	httpClient = &http.Client{Transport: rt}
+	H := rt.handlers
+	onMR, cfOnly := []byte("same-bytes-on-modrinth"), []byte("curseforge-only")
+	files := []any{
+		M{"id": 1, "modId": 10, "fileName": "onmodrinth.jar", "downloadUrl": nil, "hashes": []any{M{"algo": 2, "value": "md5"}, M{"algo": 1, "value": strings.ToUpper(sum(onMR))}}},
+		M{"id": 2, "modId": 20, "fileName": "cfonly.jar", "downloadUrl": nil, "hashes": []any{M{"algo": 1, "value": sum(cfOnly)}}}}
+	H["api.curseforge.com/v1/mods/files"] = func(*http.Request) (int, []byte) { return 200, mustJSON(M{"data": files}) }
+	H["api.curseforge.com/v1/mods"] = func(*http.Request) (int, []byte) {
+		return 200, mustJSON(M{"data": []any{M{"id": 10, "name": "On Modrinth", "classId": 6}, M{"id": 20, "name": "CF Only", "classId": 6}}})
+	}
+	mrUp := true
+	H["api.modrinth.com/v2/version_files"] = func(req *http.Request) (int, []byte) {
+		if !mrUp {
+			return 503, nil
+		}
+		return 200, mustJSON(M{sum(onMR): M{"files": []any{M{"url": "https://cdn.modrinth.com/other.jar", "hashes": M{"sha1": "ffff"}},
+			M{"url": "https://cdn.modrinth.com/onmodrinth.jar", "hashes": M{"sha1": sum(onMR)}}}}})
+	}
+	H["cdn.modrinth.com/onmodrinth.jar"] = func(*http.Request) (int, []byte) { return 200, onMR }
+
+	p := newPaths(filepath.Join(tmp, "data"))
+	cfg := &Config{CurseForgeAPIKey: "KEY", MemoryMB: 4096}
+	var logs []string
+	logf := func(f string, a ...any) { logs = append(logs, fmt.Sprintf(f, a...)) }
+	zp := filepath.Join(tmp, "pack.zip")
+	writeFileAtomic(zp, zipBytes(map[string][]byte{"manifest.json": mustJSON(M{"minecraft": M{"version": "1.21.1", "modLoaders": []any{M{"id": "neoforge-21.1.77", "primary": true}}},
+		"manifestType": "minecraftModpack", "name": "P", "overrides": "overrides", "files": []any{M{"projectID": 10, "fileID": 1}, M{"projectID": 20, "fileID": 2}}})}))
+
+	inst, err := importPack(p, cfg, zp, logf, nil)
+	if err != nil {
+		t.Fatalf("import: %v %v", err, logs)
+	}
+	if !exists(filepath.Join(inst.GameDir(), "mods", "onmodrinth.jar")) || len(inst.Manual) != 1 || inst.Manual[0].FileName != "cfonly.jar" || inst.Manual[0].SHA1 != sum(cfOnly) {
+		t.Fatalf("expected one file from Modrinth and one left manual: %+v\n%v", inst.Manual, logs)
+	}
+
+	// A pack imported earlier (no hashes remembered, Modrinth unreachable at the time) is fixed by "Check again".
+	mrUp = false
+	inst2, err := importPack(p, cfg, zp, logf, nil)
+	if err != nil || len(inst2.Manual) != 2 {
+		t.Fatalf("with Modrinth down both stay manual: %v %+v", err, inst2)
+	}
+	for i := range inst2.Manual {
+		inst2.Manual[i].SHA1 = ""
+	}
+	inst2.Save()
+	mrUp = true
+	if n := resolveManualViaModrinth(inst2, "KEY", logf); n != 1 || len(inst2.Manual) != 1 || !exists(filepath.Join(inst2.GameDir(), "mods", "onmodrinth.jar")) {
+		t.Fatalf("retry should fetch one file: n=%d %+v", n, inst2.Manual)
+	}
+	if got := findInstance(p, inst2.ID); len(got.Manual) != 1 || got.Manual[0].SHA1 == "" {
+		t.Fatal("remaining item should be saved with its hash")
+	}
+}

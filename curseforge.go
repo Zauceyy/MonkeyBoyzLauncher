@@ -232,7 +232,7 @@ func downloadWithAPI(m *cfManifest, gameDir, apiKey string, logf Logger, prog Pr
 		}
 		fileURL := fmt.Sprintf("%s/files/%d", page, e.FileID)
 		if f == nil {
-			manual = append(manual, ManualItem{e.ProjectID, e.FileID, name, "", "mods", fileURL, "this file was removed from CurseForge"})
+			manual = append(manual, ManualItem{e.ProjectID, e.FileID, name, "", "mods", fileURL, "this file was removed from CurseForge", ""})
 			continue
 		}
 		fileName := filepath.Base(asS(f["fileName"]))
@@ -243,17 +243,31 @@ func downloadWithAPI(m *cfManifest, gameDir, apiKey string, logf Logger, prog Pr
 		}
 		metas = append(metas, ModMeta{Project: e.ProjectID, File: e.FileID, Name: name, FileName: fileName, Folder: folder,
 			Summary: asS(mod["summary"]), Logo: asS(asM(mod["logo"])["thumbnailUrl"]), URL: page, Author: author})
+		sum := cfSHA1(f)
 		if u := asS(f["downloadUrl"]); u != "" {
-			sum := ""
-			for _, h := range asA(f["hashes"]) {
-				if asInt(asM(h)["algo"]) == 1 {
-					sum = asS(asM(h)["value"])
-				}
-			}
 			jobs = append(jobs, dlJob{[]string{strings.ReplaceAll(u, " ", "%20")}, filepath.Join(gameDir, folder, fileName), sum})
 		} else { // the author switched off downloads from other launchers
-			manual = append(manual, ManualItem{e.ProjectID, e.FileID, name, fileName, folder, fileURL, "the author only allows downloads from the CurseForge site"})
+			manual = append(manual, ManualItem{e.ProjectID, e.FileID, name, fileName, folder, fileURL, "the author only allows downloads from the CurseForge site", sum})
 		}
+	}
+	// Many of those authors publish the identical file on Modrinth, which does allow launcher downloads.
+	var hashes []string
+	for _, it := range manual {
+		if it.SHA1 != "" && it.FileName != "" {
+			hashes = append(hashes, it.SHA1)
+		}
+	}
+	if found := modrinthByHash(hashes); len(found) > 0 {
+		kept := manual[:0]
+		for _, it := range manual {
+			if u := found[it.SHA1]; u != "" && it.FileName != "" {
+				jobs = append(jobs, dlJob{[]string{u}, filepath.Join(gameDir, it.Folder, it.FileName), it.SHA1})
+			} else {
+				kept = append(kept, it)
+			}
+		}
+		logf("Found %d CurseForge-only file(s) on Modrinth instead.", len(manual)-len(kept))
+		manual = kept
 	}
 	if errs := downloadMany(jobs, "Downloading mods", prog, 8); len(errs) > 0 {
 		for _, e := range firstN(errs, 10) {
@@ -318,7 +332,7 @@ func downloadWithoutAPI(m *cfManifest, gameDir string, logf Logger, prog Progres
 				mu.Lock()
 				if err != nil {
 					manual = append(manual, ManualItem{j.project, j.file, fmt.Sprintf("Project %d", j.project), "", "mods",
-						fmt.Sprintf("https://www.curseforge.com/projects/%d", j.project), "automatic download failed: " + err.Error()})
+						fmt.Sprintf("https://www.curseforge.com/projects/%d", j.project), "automatic download failed: " + err.Error(), ""})
 				} else {
 					metas = append(metas, ModMeta{Project: j.project, File: j.file, FileName: name, Folder: folder})
 				}
@@ -355,6 +369,87 @@ func downloadMods(m *cfManifest, gameDir, apiKey string, logf Logger, prog Progr
 		return nil, nil, errors.New("CurseForge blocked every download. Add a free CurseForge API key in Settings (it takes a minute) and import again")
 	}
 	return manual, metas, nil
+}
+
+func cfSHA1(file M) string {
+	for _, h := range asA(file["hashes"]) {
+		if asInt(asM(h)["algo"]) == 1 {
+			return strings.ToLower(asS(asM(h)["value"]))
+		}
+	}
+	return ""
+}
+
+// modrinthByHash asks Modrinth which of these exact files (by SHA-1) it hosts, and returns hash -> download URL.
+func modrinthByHash(hashes []string) map[string]string {
+	out := map[string]string{}
+	if len(hashes) == 0 {
+		return out
+	}
+	raw, err := postJSON(modrinthAPI+"/version_files", M{"hashes": hashes, "algorithm": "sha1"}, nil)
+	if err != nil {
+		return out
+	}
+	for hash, v := range asM(raw) {
+		for _, f := range asA(asM(v)["files"]) {
+			fm := asM(f)
+			if strings.EqualFold(asS(asM(fm["hashes"])["sha1"]), hash) && strings.HasPrefix(asS(fm["url"]), "https://") {
+				out[strings.ToLower(hash)] = asS(fm["url"])
+			}
+		}
+	}
+	return out
+}
+
+// resolveManualViaModrinth retries a pack's missing files through Modrinth. It returns how many it fetched.
+func resolveManualViaModrinth(inst *Instance, apiKey string, logf Logger) int {
+	if len(inst.Manual) == 0 {
+		return 0
+	}
+	// Packs imported before hashes were remembered: look the files up on CurseForge again.
+	var ids []int
+	for _, it := range inst.Manual {
+		if it.SHA1 == "" && it.File != 0 {
+			ids = append(ids, it.File)
+		}
+	}
+	if len(ids) > 0 && apiKey != "" {
+		if r, err := postJSON(cfAPI+"/mods/files", M{"fileIds": ids}, map[string]string{"x-api-key": apiKey}); err == nil {
+			byID := map[int]M{}
+			for _, f := range asA(asM(r)["data"]) {
+				byID[asInt(asM(f)["id"])] = asM(f)
+			}
+			for i := range inst.Manual {
+				if f := byID[inst.Manual[i].File]; f != nil && inst.Manual[i].SHA1 == "" {
+					inst.Manual[i].SHA1 = cfSHA1(f)
+					if inst.Manual[i].FileName == "" {
+						inst.Manual[i].FileName = filepath.Base(asS(f["fileName"]))
+					}
+				}
+			}
+		}
+	}
+	var hashes []string
+	for _, it := range inst.Manual {
+		if it.SHA1 != "" && validFileName(it.FileName) {
+			hashes = append(hashes, it.SHA1)
+		}
+	}
+	found := modrinthByHash(hashes)
+	fetched := 0
+	var kept []ManualItem
+	for _, it := range inst.Manual {
+		u := found[it.SHA1]
+		if u != "" && validFileName(it.FileName) && download([]string{u}, filepath.Join(inst.GameDir(), it.Folder, it.FileName), it.SHA1, nil) == nil {
+			logf("Got %s from Modrinth.", it.FileName)
+			fetched++
+			continue
+		}
+		kept = append(kept, it)
+	}
+	inst.Manual = kept
+	inst.Save()
+	return fetched
 }
 
 // ---------------------------------------------------------------- manual downloads
